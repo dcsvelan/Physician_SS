@@ -9,18 +9,6 @@ import concurrent.futures
 import json
 
 # -------------------------
-# Google Authentication (Render)
-# -------------------------
-try:
-    google_auth_required = st.secrets.get("google_auth", False)
-except Exception:
-    google_auth_required = False
-
-if google_auth_required:
-    st.error("Google authentication is required. Please log in using your Google account.")
-    st.stop()
-
-# -------------------------
 # Setup Redis Cache (if available)
 # -------------------------
 redis_client = None
@@ -201,7 +189,7 @@ def extract_text_from_image(uploaded_file):
 # -------------------------
 # Streamlit UI
 # -------------------------
-st.title("VelanAI_Khel: Essential Med Info")
+st.title("VELANai_khel: Physician Pocket Reference")
 st.write("### **Why did the Chicken cross the road?!**")
 st.write(f"**{random.choice(jokes)}**")
 
