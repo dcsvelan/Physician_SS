@@ -7,94 +7,6 @@ import io
 import re
 import concurrent.futures
 import json
-import os
-
-
-# -------------------------
-# User Authentication and Registration
-# -------------------------
-
-USER_DATA_FILE = "users.json"
-
-def load_users():
-    """Load user data from a JSON file."""
-    if os.path.exists(USER_DATA_FILE):
-        with open(USER_DATA_FILE, "r") as file:
-            return json.load(file)
-    return {}
-
-def save_users(users):
-    """Save user data to a JSON file."""
-    with open(USER_DATA_FILE, "w") as file:
-        json.dump(users, file, indent=4)
-
-# Load existing user credentials
-AUTHORIZED_USERS = load_users()
-
-# Create session state for authentication
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
-
-def register():
-    """User registration function."""
-    st.sidebar.title("📝 User Registration")
-    new_username = st.sidebar.text_input("Username", key="register_username")
-    new_password = st.sidebar.text_input("Password", type="password", key="register_password")
-    new_occupation = st.sidebar.text_input("Occupation", key="register_occupation")
-    new_email = st.sidebar.text_input("Email", key="register_email")
-    new_phone = st.sidebar.text_input("Phone Number", key="register_phone")
-    new_address = st.sidebar.text_area("Address", key="register_address")
-
-    register_button = st.sidebar.button("Register")
-
-    if register_button:
-        if not new_username or not new_password or not new_email or not new_phone or not new_address:
-            st.sidebar.error("🚨 All fields are required!")
-            return
-
-        if new_username in AUTHORIZED_USERS:
-            st.sidebar.error("🚫 Username already exists! Choose another.")
-            return
-
-        # Store user details
-        AUTHORIZED_USERS[new_username] = {
-            "password": new_password,
-            "occupation": new_occupation,
-            "email": new_email,
-            "phone": new_phone,
-            "address": new_address
-        }
-
-        save_users(AUTHORIZED_USERS)
-        st.sidebar.success("✅ Registration successful! Please log in.")
-
-def login():
-    """User login function."""
-    st.sidebar.title("🔐 User Login")
-    username = st.sidebar.text_input("Username", key="login_username")
-    password = st.sidebar.text_input("Password", type="password", key="login_password")
-    login_button = st.sidebar.button("Login")
-
-    if login_button:
-        if username in AUTHORIZED_USERS and AUTHORIZED_USERS[username]["password"] == password:
-            st.session_state.authenticated = True
-            st.session_state.username = username
-            st.sidebar.success(f"✅ Logged in as {username}")
-        else:
-            st.sidebar.error("🚫 Invalid credentials!")
-
-def logout():
-    """Logout function to clear authentication state."""
-    st.session_state.authenticated = False
-    st.sidebar.warning("Logged out. Please refresh.")
-
-# Registration option
-register()
-
-# Show login screen if not authenticated
-if not st.session_state.authenticated:
-    login()
-    st.stop()
 
 # -------------------------
 # Setup Redis Cache (if available)
@@ -118,26 +30,20 @@ if redis_config:
         st.error("Error connecting to Redis: " + str(e))
         redis_client = None
 
-
-
-
-
 # -------------------------
 # Global Requests Session
 # -------------------------
 session = requests.Session()
 
 # FDA Drug Label Fields to Fetch
-FDA_FIELDS = [
-    "purpose", "adverse_reactions", "drug_and_or_laboratory_test_interactions", "drug_interactions",
+FDA_FIELDS = ["purpose", "adverse_reactions", "drug_and_or_laboratory_test_interactions", "drug_interactions",
     "ask_doctor", "ask_doctor_or_pharmacist", "do_not_use", "information_for_patients",
     "instructions_for_use", "other_safety_information", "patient_medication_information",
     "spl_medguide", "spl_patient_package_insert", "stop_use", "when_using", "boxed_warning",
     "general_precautions", "precautions", "user_safety_warnings", "warnings", "contraindications",
     "geriatric_use", "labor_and_delivery", "mechanism_of_action", "nursing_mothers", "overdosage",
     "pediatric_use", "pregnancy", "pregnancy_or_breast_feeding", "safe_handling_warning",
-    "use_in_specific_populations"
-]
+    "use_in_specific_populations"]
 
 # Mapping for RxNav class types
 class_type_mapping = {
@@ -154,7 +60,6 @@ class_type_mapping = {
 ordered_class_types = [
     "ci_with", "ci_moa", "ci_pe", "ci_chemclass", "has_pe", "has_moa", "has_epc", "may_treat"
 ]
-
 
 # List of Jokes
 jokes = [
@@ -179,10 +84,6 @@ jokes = [
     "Confucius: The chicken crossed the road to reach the state of Ren.",
     "Leibniz: In the best of all possible worlds, the chicken would cross the road."
 ]
-
-
-
-
 
 # -------------------------
 # Fetch RxNav Data
@@ -257,7 +158,6 @@ def fetch_fda_data(drug_name):
     
     return {'error': 'No FDA data available.'}
 
-
 # -------------------------
 # Combined function to fetch both FDA and RxNav data for a drug
 # -------------------------
@@ -289,7 +189,7 @@ def extract_text_from_image(uploaded_file):
 # -------------------------
 # Streamlit UI
 # -------------------------
-st.title("VELANai_khel : Physician Pocket Reference")
+st.title("VELANai_khel: Physician Pocket Reference")
 st.write("### **Why did the Chicken cross the road?!**")
 st.write(f"**{random.choice(jokes)}**")
 
@@ -297,7 +197,7 @@ st.write(f"**{random.choice(jokes)}**")
 drug_name_input = st.text_input("Enter drug name(s) (comma-separated)")
 
 # Option to upload an image containing drug label information
-uploaded_image = st.file_uploader("Or upload your Prescription", type=["png", "jpg", "jpeg"])
+uploaded_image = st.file_uploader("Or upload an image for OCR extraction", type=["png", "jpg", "jpeg"])
 
 # Determine input source: text or image (image takes precedence if uploaded)
 if uploaded_image:
