@@ -1,9 +1,30 @@
 {
-    "dcs": {
-        "password": "Dcsvelan1970",
-        "occupation": "Student",
+    "dcs1": {
+        "password": "DCS1",
+        "occupation": "prof",
+        "email": "dr.fsdfsfsdf@gmail.com",
+        "phone": "+919842245527",
+        "address": "RS Puram, Coimbatore"
+    },
+    "dcs2": {
+        "password": "DCS2",
+        "occupation": "student",
+        "email": "dxcdsfdsf@gmail.com",
+        "phone": "+919442245527",
+        "address": "comibatore, Zambia"
+    },
+    "dcs3": {
+        "password": "DCS3",
+        "occupation": "asst",
+        "email": "sdfdsfsdf@gmail.com",
+        "phone": "+919842245527",
+        "address": "City, Country"
+    },
+    "dcs4": {
+        "password": "DCS4",
+        "occupation": "student",
         "email": "dcsvelan@gmail.com",
-        "phone": "9442245527",
-        "address": "42, Gokulam Colony, Coimbatore, 641041"
+        "phone": "+919842245527",
+        "address": "coimbatore, India"
     }
 }
