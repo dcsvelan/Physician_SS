@@ -12,4 +12,3 @@ dotenv
 langchain_groq
 transformers
 deep-translator
-pyaudio==0.2.13  # Use the latest version
