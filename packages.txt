@@ -6,3 +6,5 @@ libtiff5-dev
 libwebp-dev
 tcl8.6-dev
 tk8.6-dev
+portaudio19-dev
+python3-pyaudio
