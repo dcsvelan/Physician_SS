@@ -1,0 +1,14 @@
+# Update the section where FDA fields are displayed
+results_markdown = ""
+for field in FDA_FIELDS:
+    if field in result["fda"]:
+        field_value = result["fda"][field]
+        if field_value and field_value != "No data available":
+            # Ensure lists are formatted properly
+            if isinstance(field_value, list):
+                combined_text = "\n".join(field_value)
+            else:
+                combined_text = field_value
+            
+            formatted_field = format_text(combined_text)  # Format the text properly
+            

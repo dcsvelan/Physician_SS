@@ -9,20 +9,28 @@ import concurrent.futures
 import json
 import os
 import streamlit.components.v1 as components
+
+from deep_translator import GoogleTranslator  # Added import for translation
+
+
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 import speech_recognition as sr
-from deep_translator import GoogleTranslator
+import tempfile
+
 
 # Load environment variables
 load_dotenv()
+
+# Groq API Key
 os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY")
 
-# Create LLM Object using the new model
+# Create a LLM Object
 llm = ChatGroq(
     model="llama3-70b-8192", 
     temperature=0
 )
+
 
 # -------------------------
 # PyDrive Setup for Google Drive Storage
@@ -442,373 +450,155 @@ def extract_text_from_image(uploaded_file):
 # -------------------------
 # Streamlit UI
 # -------------------------
-# st.write("# **#VelanAI_khel**")
-# st.write("## **Physician Pocket Reference**")
-st.write("###### **[dr.pathmini md coimbatore]**")
-# st.title(" **VelanAI_Khel**")
-# st.write("### **Why did the Chicken cross the road?!**")
-# st.write(f"**{random.choice(jokes)}**")
+st.title("# velanAI_khel")
+st.title("Physician Pocket Reference")
+st.write("### **Why did the Chicken cross the road?!**")
+st.write(f"**{random.choice(jokes)}**")
 
 # Option to input drug name manually
-# drug_name_input = st.text_input("#### **Enter drug name(s) (comma-separated)**")
+drug_name_input = st.text_input("Enter drug name(s) (comma-separated)")
 
 # Option to upload an image containing drug label information
-# uploaded_image = st.file_uploader("#### **Or upload your Prescription**", type=["png", "jpg", "jpeg"])
+uploaded_image = st.file_uploader("Or upload your Prescription", type=["png", "jpg", "jpeg"])
 
 # Determine input source: text or image (image takes precedence if uploaded)
-# if uploaded_image:
-    # st.info("Extracting text from the uploaded image...")
-    # extracted_text = extract_text_from_image(uploaded_image)
-    # st.write("Extracted Text:", extracted_text)
+if uploaded_image:
+    st.info("Extracting text from the uploaded image...")
+    extracted_text = extract_text_from_image(uploaded_image)
+    st.write("Extracted Text:", extracted_text)
     # Split by comma or newline to handle multi-line OCR output
-    # drug_name_input = ",".join([name.strip() for name in re.split(r"[,\n]+", extracted_text) if name.strip()])
+    drug_name_input = ",".join([name.strip() for name in re.split(r"[,\n]+", extracted_text) if name.strip()])
 
-# if st.button("Fetch"):
-    # if not drug_name_input:
-        # st.error("Please provide a drug name or upload an image.")
-    # else:
+if st.button("Fetch"):
+    if not drug_name_input:
+        st.error("Please provide a drug name or upload an image.")
+    else:
         # Split input into drug names using comma and newline as delimiters
-        # drug_names = [name.strip() for name in re.split(r"[,\n]+", drug_name_input) if name.strip()]
-        # placeholder = st.empty()  # Placeholder for incremental updates
-        # results_markdown = ""
+        drug_names = [name.strip() for name in re.split(r"[,\n]+", drug_name_input) if name.strip()]
+        placeholder = st.empty()  # Placeholder for incremental updates
+        results_markdown = ""
         
         # Use ThreadPoolExecutor to fetch data concurrently for each drug
-        # with concurrent.futures.ThreadPoolExecutor(max_workers=len(drug_names)) as executor:
-          #  future_to_drug = {executor.submit(fetch_drug_data, drug): drug for drug in drug_names}
-           # for future in concurrent.futures.as_completed(future_to_drug):
-            #    result = future.result()
-             #   if "error" in result:
-              #      results_markdown += f"### {result['drug_name']}\n**Error:** {result['error']}\n\n"
-               # else:
-                #    md_text = f"### {result['drug_name']}\n"
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(drug_names)) as executor:
+            future_to_drug = {executor.submit(fetch_drug_data, drug): drug for drug in drug_names}
+            for future in concurrent.futures.as_completed(future_to_drug):
+                result = future.result()
+                if "error" in result:
+                    results_markdown += f"### {result['drug_name']}\n**Error:** {result['error']}\n\n"
+                else:
+                    md_text = f"### {result['drug_name']}\n"
                     # Display RxNav classification data
-                 #   for category, items in result["rxnav"]["classes"].items():
-                  #      if items:
-                   #         md_text += f"- **{category}:** {', '.join(items)}\n"
+                    for category, items in result["rxnav"]["classes"].items():
+                        if items:
+                            md_text += f"- **{category}:** {', '.join(items)}\n"
                     # Display FDA data fields with enhanced text formatting
-                    # for field in FDA_FIELDS:
-                      #  if field in result["fda"]:
-                       #     field_value = result["fda"][field]
-                        #    if field_value and field_value != "No data available":
+                    for field in FDA_FIELDS:
+                        if field in result["fda"]:
+                            field_value = result["fda"][field]
+                            if field_value and field_value != "No data available":
                                 # If field_value is a list, join the items first
-                         #       if isinstance(field_value, list):
-                          #          combined_text = "\n".join(field_value)
-                           #     else:
-                            #        combined_text = field_value
+                                if isinstance(field_value, list):
+                                    combined_text = "\n".join(field_value)
+                                else:
+                                    combined_text = field_value
                                 # Format the text for enhanced readability
-                             #   formatted_field = format_text(combined_text)
-                              #  md_text += f"<details><summary>{field.replace('_', ' ').capitalize()}</summary>\n"
-                               # md_text += formatted_field
-                                # md_text += "\n</details>\n"
-                   # md_text += "\n"
-                   # results_markdown += md_text
+                                formatted_field = format_text(combined_text)
+                                md_text += f"<details><summary>{field.replace('_', ' ').capitalize()}</summary>\n"
+                                md_text += formatted_field
+                                md_text += "\n</details>\n"
+                    md_text += "\n"
+                    results_markdown += md_text
                 # Update UI incrementally as each drug's result is appended
-                # placeholder.markdown(results_markdown, unsafe_allow_html=True)
-# st.title("Regional GenAI 'Medical Assistant' Chatbot")
-st.title("GenAI 'Medical Assistant' Chatbot")
+                placeholder.markdown(results_markdown, unsafe_allow_html=True)
+#Create a LLM Object
+llm  = ChatGroq(
+                model           =   "llama3-70b-8192",
+                temperature     =   0
+                )
+
+st.write("### **GenAI_Chatbot                  ... info not necessarily from FDA** ###")
+# If the Global variable is not created, create it once.
+# if 'chat_history' not in st.session_state:
+    # st.session_state.chat_history = []
+
+# Parse through the Global and print the Chat History
+# for chats in st.session_state.chat_history:
+   # with st.chat_message(chats["role"]):
+       # st.markdown(chats['content'])
+
+
+# st.title("AI Chatbot")
 
 # Initialize session state variables
-if "chat_history" not in st.session_state:
+if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
-if "recording" not in st.session_state:
+if 'recording' not in st.session_state:
     st.session_state.recording = False
-if "translations" not in st.session_state:
-    st.session_state.translations = []
 
-# --- Translation Options ---
-translation_language = st.selectbox(
-    "Translate responses to:",
-    ["None", "Tamil", "Kannada", "Malayalam", "Telugu", "Hindi"],
-    key="lang_selector"
+# Function to convert speech to text
+def speech_to_text():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        st.write("Listening... Press the button again to stop recording.")
+        audio = r.listen(source)
+        try:
+            text = r.recognize_google(audio)
+            return text
+        except Exception as e:
+            return f"Error: {str(e)}"
+
+# Voice input button
+st.button(
+    "🎤 Push to Talk" if not st.session_state.recording else "⏹️ Stop Recording",
+    on_click=lambda: toggle_recording(),
+    key="voice_button"
 )
 
-lang_map = {
-    "Tamil": "ta",
-    "Malayalam": "ml",
-    "Telugu": "te",
-    "Hindi": "hi",
-    "Kannada": "kn"
-}
+def toggle_recording():
+    st.session_state.recording = not st.session_state.recording
+    if st.session_state.recording:
+        user_input = speech_to_text()
+        if user_input and not user_input.startswith("Error"):
+            process_user_input(user_input)
+    st.session_state.recording = False
 
-# Custom CSS for styling
-st.markdown("""
-<style>
-.stApp {
-    max-width: 1200px;
-    margin: 0 auto;
-}
-.main .block-container {
-    padding-top: 2rem;
-    padding-bottom: 5rem !important; /* Add extra padding at bottom */
-}
-.chat-container {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    margin: 1.5rem 0;
-}
-.stChatMessage {
-    border-radius: 10px !important;
-    border: none !important;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
-}
-.stChatMessage [data-testid="StChatMessageContent"] {
-    padding: 1rem !important;
-}
-/* Larger and more readable title */
-h1 {
-    font-size: 2.5rem !important;
-    margin-bottom: 1.5rem !important;
-    color: #1E3A8A !important;
-    text-align: center;
-}
-/* More attractive buttons */
-.stButton > button {
-    border-radius: 8px !important;
-    font-weight: 500 !important;
-    transition: all 0.2s ease !important;
-}
-.stButton > button:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
-}
-/* Better selectbox styling */
-.stSelectbox {
-    margin-bottom: 1rem !important;
-}
-/* Chat input styling */
-[data-testid="stChatInput"] {
-    border-radius: 10px !important;
-    padding: 0.5rem !important;
-    margin-top: 1rem !important;
-}
-/* Add space at bottom of page */
-.download-section {
-    margin-bottom: 4rem;
-    padding-bottom: 2rem;
-}
-</style>
-""", unsafe_allow_html=True)
+# Render the chat history (each message is rendered once)
+for chats in st.session_state.chat_history:
+    with st.chat_message(chats["role"]):
+        st.markdown(chats["content"])
 
-def render_chat_message(role, content, index):
-    """Render chat message with enhanced formatting and translation"""
-    translation = ""
-    if translation_language != "None" and role == "Assistant":
-        try:
-            translation = GoogleTranslator(source='auto', target=lang_map[translation_language]).translate(content)
-            # Store translations for download
-            if index >= len(st.session_state.translations):
-                st.session_state.translations.append({"role": role, "content": translation})
-            else:
-                st.session_state.translations[index] = {"role": role, "content": translation}
-        except Exception as e:
-            st.error(f"Translation error: {str(e)}")
-            translation = "Translation failed"
-            if index >= len(st.session_state.translations):
-                st.session_state.translations.append({"role": role, "content": translation})
-            else:
-                st.session_state.translations[index] = {"role": role, "content": translation}
-    elif role == "User" and index >= len(st.session_state.translations):
-        # Add user messages to translation list too
-        st.session_state.translations.append({"role": role, "content": content})
-    
-    with st.container():
-        # Display content without role title
-        st.markdown(content)
-        if translation:
-            st.markdown(f"**{translation_language} Translation:**")
-            st.markdown(translation)
-
-def process_user_input(user_input, display_input=True):
-    """Process and store user input with error handling, with option to hide the input"""
+# Function to process user input
+def process_user_input(user_input):
     if not user_input.strip():
         return
-
-    try:
-        # Generate response
-        response = llm.invoke([{
-            "role": "system",
-            "content": "You are a helpful medical assistant. Provide clear, structured responses about medications."
-        }, {
-            "role": "user",
-            "content": user_input
-        }]).content
-
-        # Store messages with unique IDs
-        if display_input:
-            st.session_state.chat_history.extend([
-                {"role": "User", "content": user_input},
-                {"role": "Assistant", "content": response}
-            ])
-        else:
-            # Only add the assistant's response, not the original prompt
-            st.session_state.chat_history.append(
-                {"role": "Assistant", "content": response}
-            )
-
-    except Exception as e:
-        st.error(f"Error processing request: {str(e)}")
-
-# UI Components with improved layout
-col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
-with col1:
-    if st.button("🎤 Voice Input", use_container_width=True):
-        try:
-            r = sr.Recognizer()
-            with sr.Microphone() as source:
-                st.info("Listening... Please speak now.")
-                audio = r.listen(source)
-                user_input = r.recognize_google(audio)
-                process_user_input(user_input)
-        except Exception as e:
-            st.error(f"Voice recognition error: {str(e)}")
-
-with col2:
-    if st.button("👨‍⚕️ Physician", use_container_width=True):
-        # Extract drug names from the most recent user input
-        if st.session_state.chat_history and len(st.session_state.chat_history) > 0:
-            recent_messages = [msg for msg in st.session_state.chat_history if msg["role"] == "User"]
-            if recent_messages:
-                user_input = recent_messages[-1]["content"]
-                # Form the physician prompt
-                physician_prompt = f"""Act as a clinical decision support tool. For the drug {user_input}mentioned in the user query:
-
-1. Identify its primary therapeutic use based on FDA labeling and clinical guidelines.
-2. Systematically categorize symptoms to monitor regularly into:
-   - Medication Ineffectiveness (failure to achieve intended effect)
-   - Unintended Side Effects (adverse drug reactions)
-   - Disease Progression (worsening underlying condition)
-3. Rank symptoms within each category by clinical urgency (Critical/High/Moderate) using these criteria:
-   - Likelihood of severe harm if untreated
-   - Time sensitivity for intervention
-   - Strength of association with the drug/condition
-4. For each symptom, provide:
-   - Rationale: Pathophysiological basis + evidence from ≥1 peer-reviewed study
-   - Monitoring Guidance: Frequency, tools (e.g., lab tests, validated scales), and red flags
-5. Format results in a structured table with columns:
-   | Rank | Symptom | Clinical Priority | Rationale | Monitoring Guidance |
-6. Prioritize symptoms mentioned in drug monographs (e.g., FDA Black Box Warnings)
-7. Include patient-specific considerations: Age, comorbidities, concurrent medications.
-
-Example Output Structure for Metformin:
-| Rank | Symptom                | Priority  | Rationale                          | Monitoring Guidance        |
-|------|-------------------------|-----------|------------------------------------|----------------------------|
-| 1    | Lactic acidosis         | Critical  | Rare but fatal; renal impairment   | SCr/eGFR baseline + q3mo   |
-| 2    | Persistent GI distress  | High      | 25% experience nausea/diarrhea    | Symptom diary + diet mod   |
-
-Constraints:
-- Cite sources using AMA format (e.g., NEJM 2023; 388:123-135)
-- Exclude speculative associations
-- Use SNOMED-CT terms
-
-Deliverable: Clinically actionable, evidence-based ranking for patient education."""
-                # Process the prompt but don't display it in the chat history
-                process_user_input(physician_prompt, display_input=False)
-            else:
-                st.error("No user input found. Please enter a drug name first.")
-        else:
-            st.error("No user input found. Please enter a drug name first.")
-
-with col3:
-    if st.button("🧑‍⚕️ Patient", use_container_width=True):
-        # Extract drug names from the most recent user input
-        if st.session_state.chat_history and len(st.session_state.chat_history) > 0:
-            recent_messages = [msg for msg in st.session_state.chat_history if msg["role"] == "User"]
-            if recent_messages:
-                user_input = recent_messages[-1]["content"]
-                # Form the patient prompt
-                patient_prompt = f"""Act as a clinical decision support tool. For the drug {user_input}mentioned in the user query:
-
-1. Identify its primary therapeutic use based on FDA labeling and clinical guidelines.
-2. Systematically categorize symptoms to monitor regularly into:
-   - Medication Ineffectiveness (failure to achieve intended effect)
-   - Unintended Side Effects (adverse drug reactions)
-   - Disease Progression (worsening underlying condition)
-3. Rank symptoms within each category by clinical urgency (Critical/High/Moderate) using these criteria:
-   - Likelihood of severe harm if untreated
-   - Time sensitivity for intervention
-   - Strength of association with the drug/condition
-4. For each symptom, provide:
-   - Rationale: Pathophysiological basis + evidence from ≥1 peer-reviewed study
-   - Monitoring Guidance: Frequency, tools (e.g., lab tests, validated scales), and red flags
-5. Format results in a structured table with columns:
-   | Rank | Symptom | Clinical Priority | Rationale | Monitoring Guidance |
-6. Prioritize symptoms mentioned in drug monographs (e.g., FDA Black Box Warnings)
-7. Include patient-specific considerations: Age, comorbidities, concurrent medications.
-
-Example Output Structure for Metformin:
-| Rank | Symptom                | Priority  | Rationale                          | Monitoring Guidance        |
-|------|-------------------------|-----------|------------------------------------|----------------------------|
-| 1    | Lactic acidosis         | Critical  | Rare but fatal; renal impairment   | SCr/eGFR baseline + q3mo   |
-| 2    | Persistent GI distress  | High      | 25% experience nausea/diarrhea    | Symptom diary + diet mod   |
-
-Constraints:
-- Cite sources using AMA format (e.g., NEJM 2023; 388:123-135)
-- Exclude speculative associations
-- Use SNOMED-CT terms
-
-Deliverable: Clinically actionable, evidence-based ranking for patient education. However list only the patient observable features of ranked symptoms in a non-professional manner, without any groupings, titles and explanations. Do not present the output Table and the title, "Patient-observable features:".Do not provide the note and the intro sentence. provide just the ranked list. Avoid the line that starts with Here is the list of patient-observable features to monitor."""
-                # Process the prompt but don't display it in the chat history
-                process_user_input(patient_prompt, display_input=False)
-            else:
-                st.error("No user input found. Please enter a drug name first.")
-        else:
-            st.error("No user input found. Please enter a drug name first.")
-with col4:
-    if st.button("🧹 Clear Chat", use_container_width=True):
-        st.session_state.chat_history = []
-        st.session_state.translations = []
-# Text input
-user_text = st.chat_input("Type your message...")
-if user_text:
-    process_user_input(user_text)
-
-# Display chat history with unique keys
-with st.container():
-    for index, msg in enumerate(st.session_state.chat_history):
-        with st.chat_message(msg["role"].lower()):
-            render_chat_message(msg["role"], msg["content"], index)
-
-# Download functionality with two buttons
-# Download functionality with two buttons
-if st.session_state.chat_history:
-    # st.markdown("### Download Options")
+    # Append user input to chat history
+    st.session_state.chat_history.append({"role": "User", "content": user_input})
     
-    # Original chat text (full history)
-    chat_text = "\n\n".join([f"{msg['role']}: {msg['content']}" 
-                           for msg in st.session_state.chat_history])
+    # Prepare prompt for the LLM
+    system_msg = {
+        "role": "system",
+        "content": "You are a helpful assistant who answers user queries accurately."
+    }
+    human_msg = {
+        "role": "user",
+        "content": user_input
+    }
+    prompt = [system_msg, human_msg]
     
-    # Get only the last translated message (if available)
-    last_translated_text = ""
-    if st.session_state.translations and translation_language != "None":
-        # Find the last assistant message in translations
-        assistant_messages = [msg for msg in st.session_state.translations if msg['role'] == "Assistant"]
-        if assistant_messages:
-            last_message = assistant_messages[-1]
-            last_translated_text = f"{last_message['role']}: {last_message.get('content', 'No translation')}"
-    
-    # Create columns for download buttons
-    col1, col2, col3 = st.columns([1, 1, 1])
-    
-    with col1:
-        st.download_button(
-            label="📥 Download English Chat",
-            data=chat_text,
-            file_name="chat_history.txt",
-            mime="text/plain",
-            use_container_width=True
-        )
-    
-    with col3:
-        disabled = not (last_translated_text and translation_language != "None")
-        st.download_button(
-            label=f"📥 Download {translation_language or 'Translated'} Chat",
-            data=last_translated_text if not disabled else "No translations available",
-            file_name=f"last_message_{translation_language.lower() if translation_language != 'None' else 'translated'}.txt",
-            mime="text/plain",
-            disabled=disabled,
-            use_container_width=True
-        )
+    with st.spinner("Thinking..."):
+        llm_response = llm.invoke(prompt).content
 
-# Add extra space at bottom to ensure visibility of all content
-st.markdown("<div class='download-section'></div>", unsafe_allow_html=True)
+    # Translate the response to Tamil
+    response_tamil = GoogleTranslator(source="auto", target="ta").translate(llm_response)
+    combined_response = f"{llm_response}\n\n**Tamil Translation:** {response_tamil}"
+    
+    # Append assistant response (combined text) to chat history
+    st.session_state.chat_history.append({
+        "role": "Assistant", 
+        "content": combined_response
+    })
+
+# Fallback text input
+user_text_input = st.chat_input("Type your message...", key="chat_input_1")
+if user_text_input:
+    process_user_input(user_text_input)

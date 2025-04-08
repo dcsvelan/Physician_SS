@@ -444,8 +444,8 @@ def extract_text_from_image(uploaded_file):
 # -------------------------
 # st.write("# **#VelanAI_khel**")
 # st.write("## **Physician Pocket Reference**")
-st.write("###### **[dr.pathmini md coimbatore]**")
-# st.title(" **VelanAI_Khel**")
+# st.write("###### **Physician Pocket Reference [FDA]**")
+st.title(" **Physician Pocket Reference [FDA]**")
 # st.write("### **Why did the Chicken cross the road?!**")
 # st.write(f"**{random.choice(jokes)}**")
 
@@ -456,56 +456,56 @@ st.write("###### **[dr.pathmini md coimbatore]**")
 # uploaded_image = st.file_uploader("#### **Or upload your Prescription**", type=["png", "jpg", "jpeg"])
 
 # Determine input source: text or image (image takes precedence if uploaded)
-# if uploaded_image:
-    # st.info("Extracting text from the uploaded image...")
-    # extracted_text = extract_text_from_image(uploaded_image)
-    # st.write("Extracted Text:", extracted_text)
+if uploaded_image:
+    st.info("Extracting text from the uploaded image...")
+    extracted_text = extract_text_from_image(uploaded_image)
+    st.write("Extracted Text:", extracted_text)
     # Split by comma or newline to handle multi-line OCR output
-    # drug_name_input = ",".join([name.strip() for name in re.split(r"[,\n]+", extracted_text) if name.strip()])
+    drug_name_input = ",".join([name.strip() for name in re.split(r"[,\n]+", extracted_text) if name.strip()])
 
-# if st.button("Fetch"):
-    # if not drug_name_input:
-        # st.error("Please provide a drug name or upload an image.")
-    # else:
+" if st.button("Fetch"):
+"  if not drug_name_input:
+        st.error("Please provide a drug name or upload an image.")
+    else:
         # Split input into drug names using comma and newline as delimiters
-        # drug_names = [name.strip() for name in re.split(r"[,\n]+", drug_name_input) if name.strip()]
-        # placeholder = st.empty()  # Placeholder for incremental updates
-        # results_markdown = ""
+        drug_names = [name.strip() for name in re.split(r"[,\n]+", drug_name_input) if name.strip()]
+        placeholder = st.empty()  # Placeholder for incremental updates
+        results_markdown = ""
         
         # Use ThreadPoolExecutor to fetch data concurrently for each drug
-        # with concurrent.futures.ThreadPoolExecutor(max_workers=len(drug_names)) as executor:
-          #  future_to_drug = {executor.submit(fetch_drug_data, drug): drug for drug in drug_names}
-           # for future in concurrent.futures.as_completed(future_to_drug):
-            #    result = future.result()
-             #   if "error" in result:
-              #      results_markdown += f"### {result['drug_name']}\n**Error:** {result['error']}\n\n"
-               # else:
-                #    md_text = f"### {result['drug_name']}\n"
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(drug_names)) as executor:
+            future_to_drug = {executor.submit(fetch_drug_data, drug): drug for drug in drug_names}
+            for future in concurrent.futures.as_completed(future_to_drug):
+                result = future.result()
+                if "error" in result:
+                    results_markdown += f"### {result['drug_name']}\n**Error:** {result['error']}\n\n"
+                else:
+                    md_text = f"### {result['drug_name']}\n"
                     # Display RxNav classification data
-                 #   for category, items in result["rxnav"]["classes"].items():
-                  #      if items:
-                   #         md_text += f"- **{category}:** {', '.join(items)}\n"
+                    for category, items in result["rxnav"]["classes"].items():
+                        if items:
+                            md_text += f"- **{category}:** {', '.join(items)}\n"
                     # Display FDA data fields with enhanced text formatting
-                    # for field in FDA_FIELDS:
-                      #  if field in result["fda"]:
-                       #     field_value = result["fda"][field]
-                        #    if field_value and field_value != "No data available":
+                    for field in FDA_FIELDS:
+                        if field in result["fda"]:
+                            field_value = result["fda"][field]
+                            if field_value and field_value != "No data available":
                                 # If field_value is a list, join the items first
-                         #       if isinstance(field_value, list):
-                          #          combined_text = "\n".join(field_value)
-                           #     else:
-                            #        combined_text = field_value
+                                if isinstance(field_value, list):
+                                    combined_text = "\n".join(field_value)
+                                else:
+                                    combined_text = field_value
                                 # Format the text for enhanced readability
-                             #   formatted_field = format_text(combined_text)
-                              #  md_text += f"<details><summary>{field.replace('_', ' ').capitalize()}</summary>\n"
-                               # md_text += formatted_field
-                                # md_text += "\n</details>\n"
-                   # md_text += "\n"
-                   # results_markdown += md_text
+                                formatted_field = format_text(combined_text)
+                                md_text += f"<details><summary>{field.replace('_', ' ').capitalize()}</summary>\n"
+                                md_text += formatted_field
+                                md_text += "\n</details>\n"
+                    md_text += "\n"
+                    results_markdown += md_text
                 # Update UI incrementally as each drug's result is appended
-                # placeholder.markdown(results_markdown, unsafe_allow_html=True)
-# st.title("Regional GenAI 'Medical Assistant' Chatbot")
-st.title("GenAI 'Medical Assistant' Chatbot")
+                placeholder.markdown(results_markdown, unsafe_allow_html=True)
+# st.title("VelanAI_கேள் [Regional GenAI]")
+st.write("#### **VelanAI_கேள் : [Regional GenAI 'Medical Assistant' Chatbot]**")
 
 # Initialize session state variables
 if "chat_history" not in st.session_state:
@@ -619,8 +619,8 @@ def render_chat_message(role, content, index):
             st.markdown(f"**{translation_language} Translation:**")
             st.markdown(translation)
 
-def process_user_input(user_input, display_input=True):
-    """Process and store user input with error handling, with option to hide the input"""
+def process_user_input(user_input):
+    """Process and store user input with error handling"""
     if not user_input.strip():
         return
 
@@ -635,16 +635,10 @@ def process_user_input(user_input, display_input=True):
         }]).content
 
         # Store messages with unique IDs
-        if display_input:
-            st.session_state.chat_history.extend([
-                {"role": "User", "content": user_input},
-                {"role": "Assistant", "content": response}
-            ])
-        else:
-            # Only add the assistant's response, not the original prompt
-            st.session_state.chat_history.append(
-                {"role": "Assistant", "content": response}
-            )
+        st.session_state.chat_history.extend([
+            {"role": "User", "content": user_input},
+            {"role": "Assistant", "content": response}
+        ])
 
     except Exception as e:
         st.error(f"Error processing request: {str(e)}")
@@ -702,8 +696,7 @@ Constraints:
 - Use SNOMED-CT terms
 
 Deliverable: Clinically actionable, evidence-based ranking for patient education."""
-                # Process the prompt but don't display it in the chat history
-                process_user_input(physician_prompt, display_input=False)
+                process_user_input(physician_prompt)
             else:
                 st.error("No user input found. Please enter a drug name first.")
         else:
@@ -717,43 +710,13 @@ with col3:
             if recent_messages:
                 user_input = recent_messages[-1]["content"]
                 # Form the patient prompt
-                patient_prompt = f"""Act as a clinical decision support tool. For the drug {user_input}mentioned in the user query:
-
-1. Identify its primary therapeutic use based on FDA labeling and clinical guidelines.
-2. Systematically categorize symptoms to monitor regularly into:
-   - Medication Ineffectiveness (failure to achieve intended effect)
-   - Unintended Side Effects (adverse drug reactions)
-   - Disease Progression (worsening underlying condition)
-3. Rank symptoms within each category by clinical urgency (Critical/High/Moderate) using these criteria:
-   - Likelihood of severe harm if untreated
-   - Time sensitivity for intervention
-   - Strength of association with the drug/condition
-4. For each symptom, provide:
-   - Rationale: Pathophysiological basis + evidence from ≥1 peer-reviewed study
-   - Monitoring Guidance: Frequency, tools (e.g., lab tests, validated scales), and red flags
-5. Format results in a structured table with columns:
-   | Rank | Symptom | Clinical Priority | Rationale | Monitoring Guidance |
-6. Prioritize symptoms mentioned in drug monographs (e.g., FDA Black Box Warnings)
-7. Include patient-specific considerations: Age, comorbidities, concurrent medications.
-
-Example Output Structure for Metformin:
-| Rank | Symptom                | Priority  | Rationale                          | Monitoring Guidance        |
-|------|-------------------------|-----------|------------------------------------|----------------------------|
-| 1    | Lactic acidosis         | Critical  | Rare but fatal; renal impairment   | SCr/eGFR baseline + q3mo   |
-| 2    | Persistent GI distress  | High      | 25% experience nausea/diarrhea    | Symptom diary + diet mod   |
-
-Constraints:
-- Cite sources using AMA format (e.g., NEJM 2023; 388:123-135)
-- Exclude speculative associations
-- Use SNOMED-CT terms
-
-Deliverable: Clinically actionable, evidence-based ranking for patient education. However list only the patient observable features of ranked symptoms in a non-professional manner, without any groupings, titles and explanations. Do not present the output Table and the title, "Patient-observable features:".Do not provide the note and the intro sentence. provide just the ranked list. Avoid the line that starts with Here is the list of patient-observable features to monitor."""
-                # Process the prompt but don't display it in the chat history
-                process_user_input(patient_prompt, display_input=False)
+                patient_prompt = f"You are providing information to a Patient, so keep it very simple for a 14 year old. Identify the primary use of the drug {user_input} and find the symptoms that are to be assessed regularly in alerting the patient regarding the medication's ineffectiveness, unintended side effects and symptoms of worsening of the disease. Avoid providing any information except  just the ranking of significant Symptom's list - without any groupings, titles and explanations."
+                process_user_input(patient_prompt)
             else:
                 st.error("No user input found. Please enter a drug name first.")
         else:
             st.error("No user input found. Please enter a drug name first.")
+
 with col4:
     if st.button("🧹 Clear Chat", use_container_width=True):
         st.session_state.chat_history = []
@@ -770,7 +733,6 @@ with st.container():
             render_chat_message(msg["role"], msg["content"], index)
 
 # Download functionality with two buttons
-# Download functionality with two buttons
 if st.session_state.chat_history:
     # st.markdown("### Download Options")
     
@@ -778,14 +740,23 @@ if st.session_state.chat_history:
     chat_text = "\n\n".join([f"{msg['role']}: {msg['content']}" 
                            for msg in st.session_state.chat_history])
     
-    # Get only the last translated message (if available)
-    last_translated_text = ""
+    # Get only the last two translated messages (if available), without the "Assistant: " prefix
+    last_two_translated_text = ""
     if st.session_state.translations and translation_language != "None":
-        # Find the last assistant message in translations
-        assistant_messages = [msg for msg in st.session_state.translations if msg['role'] == "Assistant"]
-        if assistant_messages:
-            last_message = assistant_messages[-1]
-            last_translated_text = f"{last_message['role']}: {last_message.get('content', 'No translation')}"
+        # Get the last two messages (if there are at least two)
+        last_two_messages = st.session_state.translations[-2:] if len(st.session_state.translations) >= 2 else st.session_state.translations
+        
+        # Format messages without the "Assistant: " prefix for assistant messages
+        formatted_messages = []
+        for msg in last_two_messages:
+            if msg['role'] == "Assistant":
+                # For assistant messages, include only the content without the role prefix
+                formatted_messages.append(f"{msg.get('content', 'No translation')}")
+            else:
+                # For user messages, keep the standard format
+                formatted_messages.append(f"{msg['role']}: {msg.get('content', 'No translation')}")
+        
+        last_two_translated_text = "\n\n".join(formatted_messages)
     
     # Create columns for download buttons
     col1, col2, col3 = st.columns([1, 1, 1])
@@ -800,11 +771,11 @@ if st.session_state.chat_history:
         )
     
     with col3:
-        disabled = not (last_translated_text and translation_language != "None")
+        disabled = not (last_two_translated_text and translation_language != "None")
         st.download_button(
             label=f"📥 Download {translation_language or 'Translated'} Chat",
-            data=last_translated_text if not disabled else "No translations available",
-            file_name=f"last_message_{translation_language.lower() if translation_language != 'None' else 'translated'}.txt",
+            data=last_two_translated_text if not disabled else "No translations available",
+            file_name=f"last_messages_{translation_language.lower() if translation_language != 'None' else 'translated'}.txt",
             mime="text/plain",
             disabled=disabled,
             use_container_width=True

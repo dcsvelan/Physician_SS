@@ -1,0 +1,61 @@
+# User Authentication and Registration
+# Setup Redis Cache 
+# Global Requests Session
+# FDA Drug Label Fields to Fetch
+FDA_FIELDS = [
+    "purpose", "adverse_reactions", "drug_and_or_laboratory_test_interactions", "drug_interactions",
+    "ask_doctor", "ask_doctor_or_pharmacist", "do_not_use", "information_for_patients",
+    "instructions_for_use", "other_safety_information", "patient_medication_information",
+    "spl_medguide", "spl_patient_package_insert", "stop_use", "when_using", "boxed_warning",
+    "general_precautions", "precautions", "user_safety_warnings", "warnings", "contraindications",
+    "geriatric_use", "labor_and_delivery", "mechanism_of_action", "nursing_mothers", "overdosage",
+    "pediatric_use", "pregnancy", "pregnancy_or_breast_feeding", "safe_handling_warning",
+    "use_in_specific_populations"
+]
+
+# Mapping for RxNav class types
+class_type_mapping = {
+    "ci_with": "Contraindications",
+    "ci_moa": "Contraindications (MoA)",
+    "ci_pe": "Contraindications (Effects)",
+    "ci_chemclass": "Contraindications (Chem)",
+    "has_pe": "Effects",
+    "has_moa": "MoA",
+    "has_epc": "Drug Class",
+    "may_treat": "To Treat"
+}
+
+ordered_class_types = [
+    "ci_with", "ci_moa", "ci_pe", "ci_chemclass", "has_pe", "has_moa", "has_epc", "may_treat"
+]
+
+
+# List of Jokes
+jokes = [
+    "Aristotle: To actualize its potential.",
+    "Plato: For the greater good.",
+    "Socrates: To examine the other side.",
+    "Descartes: It had sufficient reason to believe it was dreaming.",
+    "Hume: Out of habit.",
+    "Kant: Out of a sense of duty.",
+    "Nietzsche: Because if you gaze too long across the road, the road gazes also across you.",
+    "Hegel: To fulfill the dialectical progression.",
+    "Marx: It was a historical inevitability.",
+    "Sartre: In order to act in good faith and be true to itself.",
+    "Camus: One must imagine Sisyphus happy and the chicken crossing the road.",
+    "Wittgenstein: The meaning of 'cross' was in the use, not in the action.",
+    "Derrida: The chicken was making a deconstructive statement on the binary opposition of 'this side' and 'that side.'",
+    "Heidegger: To authentically dwell in the world.",
+    "Foucault: Because of the societal structures and power dynamics at play.",
+    "Chomsky: For a syntactic, not pragmatic, purpose.",
+    "Buddha: If you meet the chicken on the road, kill it.",
+    "Laozi: The chicken follows its path naturally.",
+    "Confucius: The chicken crossed the road to reach the state of Ren.",
+    "Leibniz: In the best of all possible worlds, the chicken would cross the road."
+]
+
+# Fetch RxNav Data
+# Fetch FDA Drug Label Data with Redis Caching
+# Combined function to fetch both FDA and RxNav data for a drug
+# Extract text from uploaded image using OCR (Tesseract)
+# Streamlit UI

@@ -1,0 +1,4 @@
+https://api.fda.gov/drug/event.json?search=Aspirin&count=patient.reaction.reactionmeddrapt.exact
+https://api.fda.gov/drug/event.json?search=patient.drug.openfda.pharm_class_epc:%22nonsteroidal+anti-inflammatory+drug%22&count=patient.reaction.reactionmeddrapt.exact
+
+https://api.fda.gov/drug/event.json?search=digoxin+AND+serious=1+AND+patient.drug.actiondrug=1&count=patient.drug.openfda.generic_name.exact&count=patient.reaction.reactionmeddrapt.exact

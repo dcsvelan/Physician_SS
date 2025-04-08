@@ -6,3 +6,9 @@ Pillow
 redis
 gunicorn 
 PyDrive
+SpeechRecognition
+gTTS
+dotenv
+langchain_groq
+transformers
+deep-translator
