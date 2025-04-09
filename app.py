@@ -20,7 +20,7 @@ os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY")
 
 # Create LLM Object using the new model
 llm = ChatGroq(
-    model="llama3-70b-8192", 
+    model="mistral-saba-24b", 
     temperature=0
 )
 
