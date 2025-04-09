@@ -185,9 +185,32 @@ def register():
 
 def login():
     st.sidebar.title("🔐 User Login")
-    username = st.sidebar.text_input("Username", key="login_username")
-    password = st.sidebar.text_input("Password", type="password", key="login_password")
+    username = st.sidebar.text_input("Username", key="login_username", value="dcs1")  # Auto-fill username
+    password = st.sidebar.text_input("Password", type="password", key="login_password", value="DCS1")  # Auto-fill password
     login_button = st.sidebar.button("Login")
+    
+    # Auto login with provided credentials
+    if not st.session_state.authenticated:
+        auto_username = "dcs1"
+        auto_password = "DCS1"
+        
+        # Add the user if it doesn't exist
+        if auto_username not in AUTHORIZED_USERS:
+            AUTHORIZED_USERS[auto_username] = {
+                "password": auto_password,
+                "occupation": "Doctor",
+                "email": "dcs1@example.com",
+                "phone": "+911234567890",
+                "address": "Coimbatore, India"
+            }
+            save_users(AUTHORIZED_USERS)
+        
+        # Auto-login
+        if AUTHORIZED_USERS[auto_username]["password"] == auto_password:
+            st.session_state.authenticated = True
+            st.session_state.username = auto_username
+            st.sidebar.success(f"✅ Logged in as {auto_username}")
+    
     if login_button:
         if username in AUTHORIZED_USERS and AUTHORIZED_USERS[username]["password"] == password:
             st.session_state.authenticated = True
@@ -444,7 +467,7 @@ def extract_text_from_image(uploaded_file):
 # -------------------------
 # st.write("# **#VelanAI_khel**")
 # st.write("## **Physician Pocket Reference**")
-st.write("###### **[dr.pathmini md coimbatore]**")
+st.write("###### **[dr.pathmini md coimbatore]					<dcsvelan@gmail.com>**")
 # st.title(" **VelanAI_Khel**")
 # st.write("### **Why did the Chicken cross the road?!**")
 # st.write(f"**{random.choice(jokes)}**")
@@ -650,21 +673,21 @@ def process_user_input(user_input, display_input=True):
         st.error(f"Error processing request: {str(e)}")
 
 # UI Components with improved layout
-col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
-with col1:
-    if st.button("🎤 Voice Input", use_container_width=True):
-        try:
-            r = sr.Recognizer()
-            with sr.Microphone() as source:
-                st.info("Listening... Please speak now.")
-                audio = r.listen(source)
-                user_input = r.recognize_google(audio)
-                process_user_input(user_input)
-        except Exception as e:
-            st.error(f"Voice recognition error: {str(e)}")
+col1, col2, col3 = st.columns([1, 1, 1])
+# with col1:
+    # if st.button("🎤 Voice Input", use_container_width=True):
+        # try:
+            # r = sr.Recognizer()
+            # with sr.Microphone() as source:
+                # st.info("Listening... Please speak now.")
+                # audio = r.listen(source)
+                # user_input = r.recognize_google(audio)
+                # process_user_input(user_input)
+        # except Exception as e:
+            # st.error(f"Voice recognition error: {str(e)}")
 
-with col2:
-    if st.button("👨‍⚕️ Physician", use_container_width=True):
+with col1:
+    if st.button("👨‍⚕️ Physician Review", use_container_width=True):
         # Extract drug names from the most recent user input
         if st.session_state.chat_history and len(st.session_state.chat_history) > 0:
             recent_messages = [msg for msg in st.session_state.chat_history if msg["role"] == "User"]
@@ -701,7 +724,7 @@ Constraints:
 - Exclude speculative associations
 - Use SNOMED-CT terms
 
-Deliverable: Clinically actionable, evidence-based ranking for patient education."""
+Deliverable: A clinically actionable, evidence-based, and consistent categorized ranking of symptoms (with SNOMED-CT terms) and signs to support professional decision-making in patient treatment and care."""
                 # Process the prompt but don't display it in the chat history
                 process_user_input(physician_prompt, display_input=False)
             else:
@@ -709,8 +732,8 @@ Deliverable: Clinically actionable, evidence-based ranking for patient education
         else:
             st.error("No user input found. Please enter a drug name first.")
 
-with col3:
-    if st.button("🧑‍⚕️ Patient", use_container_width=True):
+with col2:
+    if st.button("🧑‍⚕️ Patient Hand-out", use_container_width=True):
         # Extract drug names from the most recent user input
         if st.session_state.chat_history and len(st.session_state.chat_history) > 0:
             recent_messages = [msg for msg in st.session_state.chat_history if msg["role"] == "User"]
@@ -729,18 +752,19 @@ with col3:
    - Time sensitivity for intervention
    - Strength of association with the drug/condition
 4. For each symptom, provide:
-   - Rationale: Pathophysiological basis + evidence from ≥1 peer-reviewed study
+   - Observable features: Early signals alerting the patient 
+   - Rationale: Pathophysiological basis+ evidence from ≥1 peer-reviewed study
    - Monitoring Guidance: Frequency, tools (e.g., lab tests, validated scales), and red flags
 5. Format results in a structured table with columns:
-   | Rank | Symptom | Clinical Priority | Rationale | Monitoring Guidance |
+   | Rank | Symptom |Features| Clinical Priority | Rationale | Monitoring Guidance |
 6. Prioritize symptoms mentioned in drug monographs (e.g., FDA Black Box Warnings)
 7. Include patient-specific considerations: Age, comorbidities, concurrent medications.
 
 Example Output Structure for Metformin:
-| Rank | Symptom                | Priority  | Rationale                          | Monitoring Guidance        |
-|------|-------------------------|-----------|------------------------------------|----------------------------|
-| 1    | Lactic acidosis         | Critical  | Rare but fatal; renal impairment   | SCr/eGFR baseline + q3mo   |
-| 2    | Persistent GI distress  | High      | 25% experience nausea/diarrhea    | Symptom diary + diet mod   |
+| Rank | Symptom                | Features|Priority  | Rationale                          | Monitoring Guidance        |
+|------|-------------------------|--------|-----------|------------------------------------|----------------------------|
+| 1    | Lactic acidosis         |            | Critical  | Rare but fatal; renal impairment   | SCr/eGFR baseline + q3mo   |
+| 2    | Persistent GI distress  |             | High      | 25% experience nausea/diarrhea    | Symptom diary + diet mod   |
 
 Constraints:
 - Cite sources using AMA format (e.g., NEJM 2023; 388:123-135)
@@ -754,12 +778,13 @@ Deliverable: Clinically actionable, evidence-based ranking for patient education
                 st.error("No user input found. Please enter a drug name first.")
         else:
             st.error("No user input found. Please enter a drug name first.")
-with col4:
+
+with col3:
     if st.button("🧹 Clear Chat", use_container_width=True):
         st.session_state.chat_history = []
         st.session_state.translations = []
 # Text input
-user_text = st.chat_input("Type your message...")
+user_text = st.chat_input("Type your message... 							velanAI_Khel : கேள்!")
 if user_text:
     process_user_input(user_text)
 
