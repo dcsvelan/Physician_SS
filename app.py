@@ -340,17 +340,17 @@ st.markdown(
                   to { width: 100% }
                 }
 
-               # @keyframes blink-caret {
+                @keyframes blink-caret {
                   0%, 100% { border-color: transparent }
                   50% { border-color: #00FF00; }
                 }
 
-              #  @keyframes flash {
+                @keyframes flash {
                   0% { opacity: 0.8; text-shadow: 0 0 5px #00FF00, 0 0 10px #00FF00; }
                   50% { opacity: 1; text-shadow: 0 0 20px #00FF00, 0 0 30px #00FF00; }
                   100% { opacity: 0.8; text-shadow: 0 0 5px #00FF00, 0 0 10px #00FF00; }
                 }
-               # .ecg-title h1 {
+                .ecg-title h1 {
                   overflow: hidden;
                   white-space: nowrap;
                   border-right: 2px solid #00FF00;
