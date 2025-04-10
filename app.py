@@ -129,16 +129,80 @@ def is_valid_address(address):
 # -------------------------
 # User Authentication and Registration
 # -------------------------
-def load_user_credentials():
-    if os.path.exists(USER_DATA_FILE):
-        with open(USER_DATA_FILE, "r") as file:
-            return json.load(file)
-    return {}
 
-AUTHORIZED_USERS = load_users()
-
+# Initialize session state
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
+    st.session_state.login_attempted = False
+
+# Force download from Google Drive before every credential check
+def force_refresh_users_from_drive():
+    global USERS_JSON_FILE_ID
+    try:
+        if USERS_JSON_FILE_ID:
+            # Explicitly download the latest version from Google Drive
+            file = drive.CreateFile({'id': USERS_JSON_FILE_ID})
+            # Remove local file first if it exists
+            if os.path.exists(USER_DATA_FILE):
+                os.remove(USER_DATA_FILE)
+            # Download the latest version
+            file.GetContentFile(USER_DATA_FILE)
+            
+            # Read the freshly downloaded file
+            with open(USER_DATA_FILE, "r") as file:
+                return json.load(file)
+        else:
+            # Search for the file on Google Drive
+            file_list = drive.ListFile({
+                'q': f"title='{USER_DATA_FILE}' and trashed=false"
+            }).GetList()
+            if file_list:
+                file_drive = file_list[0]
+                USERS_JSON_FILE_ID = file_drive['id']
+                # Remove local file first if it exists
+                if os.path.exists(USER_DATA_FILE):
+                    os.remove(USER_DATA_FILE)
+                file_drive.GetContentFile(USER_DATA_FILE)
+                
+                with open(USER_DATA_FILE, "r") as file:
+                    return json.load(file)
+    except Exception as e:
+        st.error(f"Error refreshing data from Google Drive: {e}")
+    
+    # If we couldn't load from Google Drive, try local file as fallback
+    try:
+        if os.path.exists(USER_DATA_FILE):
+            with open(USER_DATA_FILE, "r") as file:
+                return json.load(file)
+    except Exception as e:
+        st.error(f"Error loading local user data: {e}")
+    
+    # Return empty dict if all else fails
+    return {}
+
+def attempt_auto_login():
+    # Force refresh from Google Drive every time
+    current_users = force_refresh_users_from_drive()
+    
+    default_username = "dcs1"
+    default_password = "DCS1"
+    
+    # Log the current users for debugging
+    st.sidebar.write(f"Debug - Available users: {list(current_users.keys())}")
+    
+    # Explicitly check if the username exists in the current data
+    if default_username not in current_users:
+        st.sidebar.error("🚫 User 'dcs1' does not exist in Google Drive data. Please register.")
+        return False
+        
+    # Then verify password only if the user exists
+    if current_users[default_username]["password"] == default_password:
+        st.session_state.authenticated = True
+        st.session_state.username = default_username
+        return True
+    else:
+        st.sidebar.error("🚫 Invalid credentials!")
+        return False
 
 def register():
     st.sidebar.title("📝 User Registration")
@@ -151,12 +215,15 @@ def register():
     register_button = st.sidebar.button("Register")
     
     if register_button:
+        # Force refresh from Google Drive every time
+        current_users = force_refresh_users_from_drive()
+        
         # Check for missing fields
         if not new_username or not new_password or not new_email or not new_phone or not new_address:
             st.sidebar.error("🚨 All fields are required!")
             return
         # Check for duplicate username
-        if new_username in AUTHORIZED_USERS:
+        if new_username in current_users:
             st.sidebar.error("🚫 Username already exists! Choose another.")
             return
         # Validate email
@@ -173,46 +240,54 @@ def register():
             return
         
         # If all validations pass, save the new user
-        AUTHORIZED_USERS[new_username] = {
+        current_users[new_username] = {
             "password": new_password,
             "occupation": new_occupation,
             "email": new_email,
             "phone": new_phone,
             "address": new_address
         }
-        save_users(AUTHORIZED_USERS)
+        save_users(current_users)
         st.sidebar.success("✅ Registration successful! Please log in.")
 
 def login():
     st.sidebar.title("🔐 User Login")
-    username = st.sidebar.text_input("Username", key="login_username", value="dcs1")  # Auto-fill username
-    password = st.sidebar.text_input("Password", type="password", key="login_password", value="DCS1")  # Auto-fill password
+    # Auto-fill with default credentials
+    username = st.sidebar.text_input("Username", value="dcs1", key="login_username")
+    password = st.sidebar.text_input("Password", value="DCS1", type="password", key="login_password")
     login_button = st.sidebar.button("Login")
     
-    # Auto login with provided credentials
-    if not st.session_state.authenticated:
-        auto_username = "dcs1"
-        auto_password = "DCS1"
+    # Auto-login attempt when the page loads (only once)
+    if not st.session_state.login_attempted:
+        st.session_state.login_attempted = True
         
-        # Add the user if it doesn't exist
-        if auto_username not in AUTHORIZED_USERS:
-            AUTHORIZED_USERS[auto_username] = {
-                "password": auto_password,
-                "occupation": "Doctor",
-                "email": "dcs1@example.com",
-                "phone": "+911234567890",
-                "address": "Coimbatore, India"
-            }
-            save_users(AUTHORIZED_USERS)
+        # Force refresh from Google Drive every time
+        current_users = force_refresh_users_from_drive()
         
-        # Auto-login
-        if AUTHORIZED_USERS[auto_username]["password"] == auto_password:
+        # Log the current users for debugging
+        st.sidebar.write(f"Debug - Available users: {list(current_users.keys())}")
+        
+        # Explicit check for user existence and password match
+        if username not in current_users:
+            st.sidebar.error("🚫 User does not exist in Google Drive data. Please register.")
+        elif current_users[username]["password"] == password:
             st.session_state.authenticated = True
-            st.session_state.username = auto_username
-            st.sidebar.success(f"✅ Logged in as {auto_username}")
+            st.session_state.username = username
+            st.sidebar.success(f"✅ Logged in as {username}")
+        else:
+            st.sidebar.error("🚫 Invalid credentials!")
     
-    if login_button:
-        if username in AUTHORIZED_USERS and AUTHORIZED_USERS[username]["password"] == password:
+    # Handle manual login button click
+    elif login_button:
+        # Force refresh from Google Drive every time
+        current_users = force_refresh_users_from_drive()
+        
+        # Log the current users for debugging
+        st.sidebar.write(f"Debug - Available users: {list(current_users.keys())}")
+        
+        if username not in current_users:
+            st.sidebar.error("🚫 User does not exist in Google Drive data. Please register.")
+        elif current_users[username]["password"] == password:
             st.session_state.authenticated = True
             st.session_state.username = username
             st.sidebar.success(f"✅ Logged in as {username}")
@@ -221,13 +296,19 @@ def login():
 
 def logout():
     st.session_state.authenticated = False
+    st.session_state.login_attempted = False
     st.sidebar.warning("Logged out. Please refresh.")
 
-register()
-
+# First page load - try auto-login
 if not st.session_state.authenticated:
-    login()
-    st.stop()
+    if not st.session_state.login_attempted:
+        attempt_auto_login()
+    
+    # If auto-login failed or already attempted, show the login form
+    if not st.session_state.authenticated:
+        register()
+        login()
+        st.stop()
 
 # -------------------------
 # Close Sidebar on Successful Login
@@ -240,8 +321,58 @@ if st.session_state.authenticated:
         </style>
         """, unsafe_allow_html=True
     )
+st.markdown(
+                """
+                <div style='display: flex; justify-content: space-between; align-items: center;'>
+                    <span style='font-weight: bold; font-size: 14px;'>nrtyasri@gmail.com</span>
+                    <span style='font-weight: bold; font-size: 14px;'>dr.pathmini md coimbatore</span>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            # ✅ ECG-style animated title
+            
+st.markdown(
+                """
+                <style>
+                @keyframes typing {
+                  from { width: 0 }
+                  to { width: 100% }
+                }
 
+                @keyframes blink-caret {
+                  0%, 100% { border-color: transparent }
+                  50% { border-color: #00FF00; }
+                }
 
+                @keyframes flash {
+                  0% { opacity: 0.8; text-shadow: 0 0 5px #00FF00, 0 0 10px #00FF00; }
+                  50% { opacity: 1; text-shadow: 0 0 20px #00FF00, 0 0 30px #00FF00; }
+                  100% { opacity: 0.8; text-shadow: 0 0 5px #00FF00, 0 0 10px #00FF00; }
+                }
+                .ecg-title h1 {
+                  overflow: hidden;
+                  white-space: nowrap;
+                  border-right: 2px solid #00FF00;
+                  animation:
+                    typing 4s steps(40, end),
+                    blink-caret 0.75s step-end infinite,
+                    flash 1s infinite;
+                  font-family: "Courier New", Courier, monospace;
+                  color: #00FF00;
+                  font-size: 44px;
+                  margin: 20px auto;
+                  width: fit-content;
+                  text-align: center;
+                }
+                </style>
+
+                <div class="ecg-title">
+                    <h1>Medical Assistant #VelanAI</h1>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 # -------------------------
 # Setup Redis Cache (if available)
 # -------------------------
@@ -467,7 +598,15 @@ def extract_text_from_image(uploaded_file):
 # -------------------------
 # st.write("# **#VelanAI_khel**")
 # st.write("## **Physician Pocket Reference**")
-st.write("###### **[dr.pathmini md coimbatore]					<dcsvelan@gmail.com>**")
+st.markdown(
+    """
+    <p style='text-align: right; color: white; font-size: 20px;'>
+        ....for the just-in-time review of clinical signs
+    </p>
+    """,
+    unsafe_allow_html=True
+)
+
 # st.title(" **VelanAI_Khel**")
 # st.write("### **Why did the Chicken cross the road?!**")
 # st.write(f"**{random.choice(jokes)}**")
@@ -528,7 +667,6 @@ st.write("###### **[dr.pathmini md coimbatore]					<dcsvelan@gmail.com>**")
                 # Update UI incrementally as each drug's result is appended
                 # placeholder.markdown(results_markdown, unsafe_allow_html=True)
 # st.title("Regional GenAI 'Medical Assistant' Chatbot")
-st.title("GenAI 'Medical Assistant' Chatbot")
 
 # Initialize session state variables
 if "chat_history" not in st.session_state:
@@ -733,7 +871,7 @@ Deliverable: A clinically actionable, evidence-based, and consistent categorized
             st.error("No user input found. Please enter a drug name first.")
 
 with col2:
-    if st.button("🧑‍⚕️ Patient Hand-out", use_container_width=True):
+    if st.button("🤒 Patient Hand-out", use_container_width=True):
         # Extract drug names from the most recent user input
         if st.session_state.chat_history and len(st.session_state.chat_history) > 0:
             recent_messages = [msg for msg in st.session_state.chat_history if msg["role"] == "User"]
