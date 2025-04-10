@@ -909,7 +909,7 @@ Constraints:
 - Exclude speculative associations
 - Use SNOMED-CT terms
 
-Deliverable: Clinically actionable, evidence-based ranking for patient education. However list only the patient observable features of ranked symptoms in a non-professional manner, without any groupings, titles and explanations. Do not present the output Table and the title, "Patient-observable features:".Do not provide the note and the intro sentence. provide just the ranked list. Avoid the line that starts with Here is the list of patient-observable features to monitor."""
+Deliverable: Clinically actionable, evidence-based ranking for patient education. Strictly do not consider symptoms of moderate and low priority clinical significance. However list only the patient observable features of ranked symptoms of critical and high priority in a non-professional manner, without any groupings, titles and explanations. Do not present the output Table and the title, "Patient-observable features:".Do not provide the note and the intro sentence. provide just the ranked list. Avoid the line that starts with Here is the list of patient-observable features to monitor. restrict the list to maximum of 15 features or less"""
                 # Process the prompt but don't display it in the chat history
                 process_user_input(patient_prompt, display_input=False)
             else:
