@@ -847,16 +847,47 @@ with col1:
    - Rationale: Pathophysiological basis + evidence from ≥1 peer-reviewed study
    - Monitoring Guidance: Frequency, tools (e.g., lab tests, validated scales), and red flags
 5. Format results in a structured table with columns:
-   | Rank | Symptom | Clinical Priority | Rationale | Monitoring Guidance |
+	| Rank | Symptom (SNOMED-CT) | Features | Priority | Rationale | Monitoring Guidance |
 6. Prioritize symptoms mentioned in drug monographs (e.g., FDA Black Box Warnings)
 7. Include patient-specific considerations: Age, comorbidities, concurrent medications.
 
-Example Output Structure for Metformin:
-| Rank | Symptom                | Priority  | Rationale                          | Monitoring Guidance        |
-|------|-------------------------|-----------|------------------------------------|----------------------------|
-| 1    | Lactic acidosis         | Critical  | Rare but fatal; renal impairment   | SCr/eGFR baseline + q3mo   |
-| 2    | Persistent GI distress  | High      | 25% experience nausea/diarrhea    | Symptom diary + diet mod   |
+Example Output Structure for Metformin (Physician Prompt):
+1. Primary Therapeutic Use
+Metformin is primarily used for the management of type 2 diabetes mellitus. It is indicated to improve glycemic control in adults with type 2 diabetes mellitus. It is also used in combination with diet and exercise to lower blood sugar levels.
 
+2. Categorized Symptoms to Monitor
+
+| Rank | Symptom (SNOMED-CT) | Features | Priority | Rationale | Monitoring Guidance |
+|---|---|---|---|---|---|
+| 1 | Lactic acidosis (SNOMED-CT: 230141003) | Severe metabolic acidosis, often with renal impairment | Critical | Rare but fatal | SCr/eGFR baseline + q3mo, avoid in renal impairment (SCr > 1.5 mg/dL in males, > 1.4 mg/dL in females) |
+| 2 | Persistent GI distress (SNOMED-CT: 22298006) | Nausea and/or diarrhea | High | 25% experience, may lead to non-adherence | Symptom diary, diet modifications, consider dose reduction or discontinuation if severe |
+| 3 | Hypoglycemia (SNOMED-CT: 230141003) | Low blood glucose levels | High | Risk of severe hypoglycemia, especially with sulfonylureas or insulin | Blood glucose monitoring, educate on symptoms and treatment |
+| 4 | Vitamin B12 deficiency (SNOMED-CT: 230141003) | Low serum vitamin B12 levels, may cause neurological symptoms | Moderate | Long-term use may cause deficiency | Annual CBC, serum vitamin B12 levels, consider supplementation |
+| 5 | Weight loss (SNOMED-CT: 230141003) | Unintentional weight loss | Moderate | May indicate poor glycemic control or other underlying issues | Regular weight monitoring, assess dietary intake and adherence |
+| 6 | Rash (SNOMED-CT: 230141003) | Skin irritation or redness | Moderate | Allergic reaction, may indicate hypersensitivity | Monitor for skin changes, discontinue if severe rash or itching |
+| 7 | Muscle pain (SNOMED-CT: 230141003) | Muscle discomfort or soreness | Moderate | May indicate lactic acidosis or myopathy | Monitor for muscle weakness, discontinue if severe pain or weakness |
+| 8 | Fatigue (SNOMED-CT: 230141003) | Persistent tiredness or exhaustion | Moderate | May indicate anemia or other underlying issues | Monitor for persistent fatigue, assess for anemia or other causes |
+| 9 | Nausea (SNOMED-CT: 230141003) | Feeling of sickness or discomfort in the stomach | Moderate | Common side effect, may lead to non-adherence | Symptom diary, consider dose reduction or discontinuation if severe |
+| 10 | Diarrhea (SNOMED-CT: 230141003) | Loose or watery stools | Moderate | Common side effect, may lead to dehydration | Monitor for dehydration, consider dose reduction or discontinuation if severe |
+
+**Key:**
+- SNOMED-CT: Systematized Nomenclature of Medicine -- Clinical Terms
+- SCr: Serum creatinine
+- eGFR: Estimated glomerular filtration rate
+- CBC: Complete blood count
+3. Patient-Specific Considerations
+- **Age**: Elderly patients may have reduced renal function, increasing the risk of lactic acidosis.
+- **Comorbidities**: Patients with renal impairment, heart failure, or liver disease are at higher risk for adverse effects.
+- **Concurrent Medications**: Use with caution in patients taking drugs that affect renal function or increase the risk of lactic acidosis.
+
+References
+1. FDA. Metformin hydrochloride extended-release tablets, for oral use. 2023.
+2. UK Prospective Diabetes Study (UKPDS) Group. Effect of intensive blood-glucose control with metformin on complications in overweight patients with type 2 diabetes (UKPDS 34). Lancet. 1998;352(9131):854-865.
+3. American Diabetes Association. Standards of Medical Care in Diabetes—2023. Diabetes Care. 2023;46(Suppl 1):S1-S232.
+Constraints:
+- Cite sources using AMA format (e.g., NEJM 2023; 388:123-135)
+- Exclude speculative associations
+- Use SNOMED-CT terms
 Constraints:
 - Cite sources using AMA format (e.g., NEJM 2023; 388:123-135)
 - Exclude speculative associations
@@ -894,22 +925,84 @@ with col2:
    - Rationale: Pathophysiological basis+ evidence from ≥1 peer-reviewed study
    - Monitoring Guidance: Frequency, tools (e.g., lab tests, validated scales), and red flags
 5. Format results in a structured table with columns:
-   | Rank | Symptom |Features| Clinical Priority | Rationale | Monitoring Guidance |
+	| Rank | Symptom (SNOMED-CT) | Features | Priority | Rationale | Monitoring Guidance |
 6. Prioritize symptoms mentioned in drug monographs (e.g., FDA Black Box Warnings)
-7. Include patient-specific considerations: Age, comorbidities, concurrent medications.
+7. Extract only the list of features associated with critical and high priority in the same rank order as in the table.
+8. For each of the feature, provide additional information to the patients with defining observable signals/indicators for the patient to monitor in his body on his own and get alerted.
+9. Include patient-specific considerations: Age, comorbidities, concurrent medications.
+Example Output Structure for Metformin (Patient Prompt):
+1. Severe Metabolic Acidosis, Often with Renal Impairment
+Definition: Metabolic acidosis is a condition in which the body produces too much acid or the kidneys are not removing enough acid from the body. Renal impairment means the kidneys are not functioning properly.
 
-Example Output Structure for Metformin:
-| Rank | Symptom                | Features|Priority  | Rationale                          | Monitoring Guidance        |
-|------|-------------------------|--------|-----------|------------------------------------|----------------------------|
-| 1    | Lactic acidosis         |            | Critical  | Rare but fatal; renal impairment   | SCr/eGFR baseline + q3mo   |
-| 2    | Persistent GI distress  |             | High      | 25% experience nausea/diarrhea    | Symptom diary + diet mod   |
+Observable Signals/Indicators:
 
-Constraints:
-- Cite sources using AMA format (e.g., NEJM 2023; 388:123-135)
-- Exclude speculative associations
-- Use SNOMED-CT terms
+Fatigue: Feeling unusually tired or weak.
+Shortness of Breath: Difficulty breathing, especially during physical activity.
+Confusion: Difficulty thinking clearly or concentrating.
+Nausea and Vomiting: Feeling sick to the stomach or actually vomiting.
+Abdominal Pain: Pain or discomfort in the stomach area.
+Muscle Weakness: Feeling weak or having difficulty moving.
+Rapid Breathing: Breathing faster than usual.
+Fruity Breath Odor: A sweet, fruity smell on the breath, which can be a sign of ketones (a byproduct of the body breaking down fat for energy).
+Decreased Urine Output: Producing less urine than usual.
+Swelling: Swelling in the legs, ankles, or feet, which can be a sign of fluid retention.
+What to Do:
 
-Deliverable: Clinically actionable, evidence-based ranking for patient education. Strictly do not consider symptoms of moderate and low priority clinical significance. However list only the patient observable features of ranked symptoms of critical and high priority in a non-professional manner, without any groupings, titles and explanations. Do not present the output Table and the title, "Patient-observable features:".Do not provide the note and the intro sentence. provide just the ranked list. Avoid the line that starts with Here is the list of patient-observable features to monitor. restrict the list to maximum of 15 features or less"""
+Monitor your urine output and note any changes.
+Keep track of your breathing rate and any shortness of breath.
+Note any changes in your mental status, such as confusion or difficulty concentrating.
+Report any of these symptoms to your healthcare provider immediately.
+2. Nausea and/or Diarrhea
+Definition: Nausea is a feeling of sickness or discomfort in the stomach that often precedes vomiting. Diarrhea is loose, watery stools that occur more frequently than usual.
+
+Observable Signals/Indicators:
+
+Nausea: Feeling sick to the stomach, often accompanied by a desire to vomit.
+Vomiting: Actual expulsion of stomach contents through the mouth.
+Abdominal Pain: Pain or cramping in the stomach area.
+Bloating: Feeling full or bloated.
+Loss of Appetite: Not feeling hungry or having a decreased desire to eat.
+Fever: Elevated body temperature.
+Dehydration: Signs of dehydration include dry mouth, dark urine, and decreased urine output.
+Fatigue: Feeling unusually tired or weak.
+Headache: Pain in the head.
+Dizziness: Feeling lightheaded or unsteady.
+What to Do:
+
+Stay hydrated by drinking plenty of fluids.
+Avoid foods that may aggravate nausea or diarrhea, such as spicy or fatty foods.
+Monitor your bowel movements and note any changes in frequency or consistency.
+Report any of these symptoms to your healthcare provider, especially if they persist or worsen.
+3. Low Blood Glucose Levels
+Definition: Low blood glucose levels, also known as hypoglycemia, occur when the blood sugar level is below the normal range. This can happen due to various reasons, including medication side effects.
+
+Observable Signals/Indicators:
+
+Sweating: Excessive sweating, often without a clear cause.
+Shakiness: Feeling shaky or trembling.
+Hunger: Feeling hungry, even if you have eaten recently.
+Irritability: Feeling irritable or anxious.
+Fatigue: Feeling unusually tired or weak.
+Dizziness: Feeling lightheaded or unsteady.
+Confusion: Difficulty thinking clearly or concentrating.
+Blurred Vision: Difficulty seeing clearly.
+Headache: Pain in the head.
+Rapid Heartbeat: Feeling like your heart is racing.
+What to Do:
+
+Carry a source of quick-acting glucose, such as glucose tablets or hard candy.
+Monitor your blood glucose levels regularly, especially if you are on medication that can lower blood sugar.
+Eat a balanced meal or snack if you experience symptoms of low blood sugar.
+Report any of these symptoms to your healthcare provider, especially if they occur frequently or are severe.
+General Advice:
+Always keep a list of your medications and any side effects you experience.
+Regularly communicate with your healthcare provider about any changes in your health or symptoms.
+Follow your healthcare provider's instructions for monitoring and managing your condition.
+If you experience any severe symptoms or have concerns, seek medical attention immediately.
+
+ 
+Caution: As it is a Patient Hand-out material, DO NOT provide any professional information to the patients other than those mentioned in the :deliverable" section. Strict adherence to the "Example Output Structure for Metformin (Patient Prompt)" provided for generating the output is mandatory.
+Deliverable: A clinically actionable, evidence-based, and consistently categorized ranking of symptoms and signs for patient education. I. The output should provide a structured response outlining the features of critical and high-priority symptoms, with clearly defined observable signals that empower patients to monitor their condition independently and receive timely alerts. II. DO NOT Present the Title (for example, Metformin: Clinical Decision Support Tool), 1. "Primary Therapeutic Use" section, 2. "Symptom Categorization and Ranking including the Table" section and 4. the "Patient-Specific Considerations" section. III.DO NOT Present the final outro paragraph(for example, "This structured response provides a clinically actionable, evidence-based, and consistently categorized ranking of symptoms and signs for patient education, empowering patients to monitor their condition independently and receive timely alerts)". Avoid presenting the Table in the output. Avoid presenting the main leading Title in the output."""
                 # Process the prompt but don't display it in the chat history
                 process_user_input(patient_prompt, display_input=False)
             else:
